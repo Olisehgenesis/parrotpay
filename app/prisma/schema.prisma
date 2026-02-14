@@ -1,0 +1,79 @@
+// Parrot Pay - Stripe-like checkout, payment links, dashboard
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String        @id @default(cuid())
+  email         String        @unique
+  name          String?
+  walletAddress String?       @unique
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  paymentLinks  PaymentLink[]
+  paymentsSent  Payment[]     @relation("Payer")
+  paymentsReceived Payment[]  @relation("Payee")
+}
+
+model PaymentLink {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  title           String?  // link name
+  amount          String   // stored in USD (e.g. "10.00")
+  currency        String   @default("USD")  // display currency (usd, eur, gbp, ngn, etc.)
+  recipientAddress String  // merchant wallet
+  type            LinkType @default(ONE_TIME)
+  memo            String?
+  active          Boolean  @default(true)
+  meal            String?  // get meal
+  phone          String?  // phone number
+  metadata       Json?    // other optional SDK fields
+  collectCustomerInfo Json?  // { name: boolean, email: boolean, phone: boolean } - Stripe-like
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  payments        Payment[]
+}
+
+model Payment {
+  id              String   @id @default(cuid())
+  amount          String
+  txHash          String?
+  memo            String?
+  status          PaymentStatus @default(PENDING)
+  fromAddress     String
+  toAddress       String
+  customerName    String?
+  customerEmail   String?
+  customerPhone   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  paymentLinkId   String?
+  paymentLink     PaymentLink? @relation(fields: [paymentLinkId], references: [id], onDelete: SetNull)
+
+  payerId         String?
+  payer           User?    @relation("Payer", fields: [payerId], references: [id], onDelete: SetNull)
+  payeeId         String?
+  payee           User?    @relation("Payee", fields: [payeeId], references: [id], onDelete: SetNull)
+}
+
+enum LinkType {
+  ONE_TIME
+  SUBSCRIPTION
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
