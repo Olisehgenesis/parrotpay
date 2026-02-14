@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePrivy, useWallets } from '@privy-io/react-auth'
 import { useAccount } from 'wagmi'
 import { CheckoutWidget, ALPHA_USD } from '@parrotpay/sdk'
-import { stringToHex, pad } from 'viem'
+import { stringToHex, pad, parseUnits } from 'viem'
 import { createWalletClient, custom, http } from 'viem'
 import { withFeePayer } from 'viem/tempo'
 import { tempoModerato } from 'viem/chains'
@@ -13,6 +13,12 @@ import { tempoActions } from 'viem/tempo'
 import type { Address } from 'viem'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import PhoneInput from 'react-phone-number-input'
+import 'react-phone-number-input/style.css'
+import { WalletHeaderButton } from '@/app/components/wallet-header-button'
 
 const DEMO_MERCHANT = '0x031891A61200FedDd622EbACC10734BC90093B2A' as Address
 
@@ -20,8 +26,11 @@ export default function Home() {
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [lastTx, setLastTx] = useState<string | null>(null)
+  const [phoneToPay, setPhoneToPay] = useState('')
+  const [phoneError, setPhoneError] = useState<string | null>(null)
+  const [codeTab, setCodeTab] = useState('sdk')
 
-  const { login, logout, ready, authenticated } = usePrivy()
+  const { login, authenticated } = usePrivy()
   const { address } = useAccount()
   const { wallets } = useWallets()
 
@@ -34,11 +43,9 @@ export default function Home() {
     if (!address) throw new Error('Connect wallet first')
     setIsSending(true)
     try {
-      // Prefer Privy embedded wallet (like privy-next-tempo reference)
       const wallet = wallets.find((w) => w.walletClientType === 'privy') ?? wallets[0]
       if (!wallet?.address) throw new Error('No wallet found. Please connect with Privy.')
 
-      // Switch to Tempo Moderato before sending (reference pattern)
       if (typeof wallet.switchChain === 'function') {
         await wallet.switchChain(tempoModerato.id)
       }
@@ -72,122 +79,193 @@ export default function Home() {
     }
   }
 
+  const handlePayByPhone = async () => {
+    setPhoneError(null)
+    if (!phoneToPay.trim()) {
+      setPhoneError('Enter a phone number')
+      return
+    }
+    if (!authenticated || !address) {
+      login()
+      return
+    }
+    setIsSending(true)
+    try {
+      const res = await fetch('/api/find', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: phoneToPay.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.address) {
+        setPhoneError(data.error || 'User not found. They need to sign in with Parrot Pay first.')
+        return
+      }
+      await sendPayment({
+        to: data.address as Address,
+        amount: parseUnits('1', 6),
+        token: ALPHA_USD,
+        memo: 'pay-by-phone-demo',
+      })
+      setPhoneToPay('')
+    } catch (e) {
+      setPhoneError(e instanceof Error ? e.message : 'Payment failed')
+    } finally {
+      setIsSending(false)
+    }
+  }
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b bg-background">
-        <div className="max-w-[1100px] mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-primary no-underline">
-            Parrot Pay
-          </Link>
-          <nav className="flex items-center gap-3">
-            {authenticated ? (
-              <>
-                <Button variant="ghost" asChild>
-                  <Link href="/create">Create payment link</Link>
-                </Button>
-                <Button variant="ghost" asChild>
-                  <Link href="/dashboard">Dashboard</Link>
-                </Button>
-                <span className="text-sm text-muted-foreground">
-                  {address?.slice(0, 6)}...{address?.slice(-4)}
-                </span>
-                <Button variant="ghost" onClick={logout}>
-                  Logout
-                </Button>
-              </>
-            ) : (
-              <Button onClick={login}>
-                Login
-              </Button>
-            )}
-          </nav>
+    <div className="min-h-screen bg-[#f5f6fa] bg-[linear-gradient(to_right,#e5e7eb_1px,transparent_1px),linear-gradient(to_bottom,#e5e7eb_1px,transparent_1px)] bg-[size:24px_24px]">
+      {/* Top bar - no header, minimal */}
+      <div className="sticky top-0 z-40 flex items-center justify-between px-6 py-4">
+        <Link href="/" className="flex items-center gap-2 no-underline group">
+          <img src="/parrot-pay-logo.svg" alt="Parrot Pay" width={32} height={32} className="shrink-0" />
+          <span className="text-lg font-bold text-[#111827] group-hover:text-[#6366F1] transition-colors">Parrot Pay</span>
+        </Link>
+        <div className="flex items-center gap-2">
+          {authenticated && (
+            <>
+              <Link href="/create" className="text-sm text-[#6b7280] hover:text-[#111827] no-underline hidden sm:inline">
+                Create link
+              </Link>
+              <Link href="/dashboard" className="text-sm text-[#6b7280] hover:text-[#111827] no-underline hidden sm:inline">
+                Dashboard
+              </Link>
+            </>
+          )}
+          <WalletHeaderButton authenticated={authenticated} onLogin={login} />
         </div>
-      </header>
+      </div>
 
-      <main className="flex-1">
-        <section className="relative py-20 px-6 text-center overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary to-[#6C63FF] opacity-[0.06]" />
-          <h2 className="relative text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Add Tempo payments to any site in one line
-          </h2>
-          <p className="relative text-lg text-muted-foreground mb-8 max-w-[500px] mx-auto">
-            Drop in our checkout widget. No backend required. Built for Tempo Testnet.
-          </p>
-          <div className="relative">
-            <Button size="lg" onClick={() => setCheckoutOpen(true)}>
-              Try Checkout Demo
-            </Button>
-          </div>
-        </section>
-
-        <section className="bg-muted/50 py-16 px-6">
-          <div className="max-w-[1100px] mx-auto">
-            <h3 className="text-2xl font-semibold text-foreground mb-6 text-center">
-              One line. Payments. Done.
-            </h3>
-            <pre className="bg-foreground text-muted-foreground p-5 rounded-lg text-sm overflow-x-auto mb-4">
-              {`<script src="https://parrotpay.xyz/embed.js" data-merchant="YOUR_ID"></script>`}
-            </pre>
-            <p className="text-muted-foreground text-center text-sm">
-              Or with React: <code className="bg-muted px-2 py-0.5 rounded text-xs">{"import { CheckoutWidget } from '@parrotpay/sdk'"}</code>
-            </p>
-          </div>
-        </section>
-
-        <section className="py-16 px-6">
-          <div className="max-w-[1100px] mx-auto">
-            <h3 className="text-2xl font-semibold text-foreground mb-6 text-center">
-              Features
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
-                <CardHeader>
-                  <div className="text-3xl mb-2">⚡</div>
-                  <CardTitle>Gasless</CardTitle>
-                  <CardDescription>Fee sponsorship — users pay zero gas</CardDescription>
-                </CardHeader>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <div className="text-3xl mb-2">🔗</div>
-                  <CardTitle>Embeddable</CardTitle>
-                  <CardDescription>Add to any site with one script tag</CardDescription>
-                </CardHeader>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <div className="text-3xl mb-2">📝</div>
-                  <CardTitle>Memos</CardTitle>
-                  <CardDescription>Reconciliation with invoice IDs</CardDescription>
-                </CardHeader>
-              </Card>
+      <main className="max-w-6xl mx-auto px-6 pb-16">
+        {/* Grid: left = content, right = sample form */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+          {/* Left - Hero + content */}
+          <div className="lg:col-span-7 order-1">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-[#111827] mb-2">
+                Add Tempo payments to any site in one line
+              </h1>
+              <p className="text-[#6b7280] mb-6">
+                Drop in our checkout widget. No backend required. Built for Tempo Testnet.
+              </p>
             </div>
-          </div>
-        </section>
 
-        {lastTx && (
-          <section className="py-8 px-6">
-            <div className="max-w-[1100px] mx-auto">
-              <Card className="border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-900">
+            {/* SDK / Embed / Metadata tabs */}
+            <div>
+              <Tabs value={codeTab} onValueChange={setCodeTab} className="w-full">
+                <TabsList className="bg-[#e5e7eb]/50">
+                  <TabsTrigger value="sdk">SDK</TabsTrigger>
+                  <TabsTrigger value="embed">Embed</TabsTrigger>
+                  <TabsTrigger value="metadata">Metadata</TabsTrigger>
+                </TabsList>
+                <TabsContent value="sdk" className="mt-3">
+                  <pre className="bg-[#111827] text-[#e5e7eb] p-4 rounded-lg text-sm overflow-x-auto font-mono">
+                    {`import { CheckoutWidget } from '@parrotpay/sdk'`}
+                  </pre>
+                </TabsContent>
+                <TabsContent value="embed" className="mt-3">
+                  <pre className="bg-[#111827] text-[#e5e7eb] p-4 rounded-lg text-sm overflow-x-auto font-mono">
+                    {`<script src="https://parrotpay.xyz/embed.js" data-merchant="YOUR_ID"></script>`}
+                  </pre>
+                </TabsContent>
+                <TabsContent value="metadata" className="mt-3">
+                  <pre className="bg-[#111827] text-[#e5e7eb] p-4 rounded-lg text-sm overflow-x-auto font-mono text-xs">
+                    {`// Payment link metadata
+{
+  "amount": "10.00",
+  "currency": "usd",
+  "recipient": "0x...",
+  "memo": "invoice-123"
+}`}
+                  </pre>
+                </TabsContent>
+              </Tabs>
+            </div>
+
+            <p className="text-sm text-[#6b7280] mt-4">
+              One line. Payments. Done.
+            </p>
+
+            {/* Pay by phone */}
+            <Card className="border-[#e5e7eb] mt-6">
+              <CardHeader>
+                <CardTitle className="text-base">Pay by phone number</CardTitle>
+                <CardDescription>We resolve to their wallet. Send 1 AlphaUSD to try.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-2">
+                  <div className="flex-1 pay-phone-input">
+                    <PhoneInput
+                      international
+                      defaultCountry="US"
+                      value={phoneToPay}
+                      onChange={(v) => setPhoneToPay(v ?? '')}
+                      placeholder="+1 234 567 8900"
+                    />
+                  </div>
+                  <Button
+                    onClick={handlePayByPhone}
+                    disabled={isSending}
+                    className="bg-[#6366F1] hover:bg-[#4F46E5] shrink-0"
+                  >
+                    {isSending ? 'Sending...' : 'Send'}
+                  </Button>
+                </div>
+                {phoneError && (
+                  <p className="mt-2 text-sm text-destructive">{phoneError}</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {lastTx && (
+              <Card className="border-green-200 bg-green-50 mt-6">
                 <CardContent className="flex items-center justify-between py-4">
-                  <span>✅ Payment sent!</span>
+                  <span className="text-green-800 font-medium">✅ Payment sent!</span>
                   <a
                     href={`https://explore.tempo.xyz/tx/${lastTx}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary font-semibold hover:underline"
+                    className="text-[#6366F1] font-semibold hover:underline"
                   >
                     View on Explorer
                   </a>
                 </CardContent>
               </Card>
-            </div>
-          </section>
-        )}
+            )}
+          </div>
+
+          {/* Right - Sample pay form */}
+          <div className="lg:col-span-5 order-2">
+            <Card className="border-[#e5e7eb] shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg">Sample payment</CardTitle>
+                <CardDescription>Try the checkout flow</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Amount</Label>
+                  <Input type="text" value="$10.00" readOnly className="bg-muted/50" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Recipient</Label>
+                  <Input type="text" value="Demo merchant" readOnly className="bg-muted/50" />
+                </div>
+                <Button
+                  className="w-full bg-[#6366F1] hover:bg-[#4F46E5]"
+                  onClick={() => setCheckoutOpen(true)}
+                >
+                  Try Checkout Demo
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </main>
 
-      <footer className="border-t py-6 text-center">
-        <p className="text-sm text-muted-foreground">Tempo Testnet • Canteen x Tempo Hackathon</p>
+      <footer className="border-t border-[#e5e7eb] py-6 text-center bg-white/80 mt-12">
+        <p className="text-sm text-[#6b7280]">Tempo Testnet • Canteen x Tempo Hackathon</p>
       </footer>
 
       <CheckoutWidget
