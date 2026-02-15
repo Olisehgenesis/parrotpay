@@ -42,7 +42,7 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#e6e9ec]">
-          <h3 className="font-semibold text-[#32325d]">Tempo</h3>
+          <h3 className="font-semibold text-[#32325d]">Parrot Pay</h3>
           <button
             type="button"
             onClick={onClose}

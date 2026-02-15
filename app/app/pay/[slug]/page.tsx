@@ -248,7 +248,7 @@ export default function PayPage() {
             <div className="space-y-2">
               <h2 className="text-sm font-medium text-[#32325d]">Payment</h2>
               <p className="text-[13px] text-[#6b7c93]">
-                Pay to {link.recipientAddress.slice(0, 8)}...{link.recipientAddress.slice(-6)} via Tempo
+                Pay to {link.recipientAddress.slice(0, 8)}...{link.recipientAddress.slice(-6)} via Parrot Pay
               </p>
             </div>
 

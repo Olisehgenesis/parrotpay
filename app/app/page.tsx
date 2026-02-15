@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { usePrivy } from '@privy-io/react-auth'
 import { usePrivyWallet } from '@/app/hooks/use-privy-wallet'
 import { CheckoutWidget, ALPHA_USD } from 'parrotpay-sdk'
@@ -29,8 +29,16 @@ export default function Home() {
   const [phoneToPay, setPhoneToPay] = useState('')
   const [phoneError, setPhoneError] = useState<string | null>(null)
   const [codeTab, setCodeTab] = useState('sdk')
+  const [stats, setStats] = useState<{ totalAmount: string; paymentCount: number } | null>(null)
 
   const { login, authenticated } = usePrivy()
+
+  useEffect(() => {
+    fetch('/api/payments/stats')
+      .then((r) => r.json())
+      .then((d) => setStats(d.totalAmount != null ? d : null))
+      .catch(() => {})
+  }, [])
   const { address } = usePrivyWallet()
   const { sendPayment: gaslessSend } = useGaslessTransfer()
 
@@ -100,11 +108,22 @@ export default function Home() {
           <div className="lg:col-span-7 order-1">
             <div>
               <h1 className="text-2xl md:text-3xl font-semibold text-[#32325d] mb-2 tracking-tight">
-                Add Tempo payments to any site in one line
+                Add Parrot Pay to any site in one line
               </h1>
-              <p className="text-[#6b7c93] text-base mb-8">
+              <p className="text-[#6b7c93] text-base mb-4">
                 Drop in our checkout widget. No backend required. Built for Tempo Testnet.
               </p>
+              {stats && (
+                <div className="flex items-baseline gap-4 mb-8 text-sm">
+                  <span className="text-[#32325d] font-semibold">
+                    ${parseFloat(stats.totalAmount).toLocaleString('en-US', { minimumFractionDigits: 2 })} USDC
+                  </span>
+                  <span className="text-[#6b7c93]">
+                    {stats.paymentCount} payment{stats.paymentCount !== 1 ? 's' : ''} handled
+                  </span>
+                </div>
+              )}
+              {!stats && <div className="mb-8" />}
             </div>
 
             {/* SDK / Embed / Metadata tabs */}
@@ -124,7 +143,7 @@ export default function Home() {
                   <pre className="bg-[#32325d] text-[#e6ecf1] p-4 text-sm overflow-x-auto font-mono">
                     {`<script src="${typeof window !== 'undefined' ? window.location.origin : 'https://parrotpay.vercel.app'}/embed.js" data-merchant="YOUR_SLUG"></script>`}
                   </pre>
-                  <p className="text-xs text-[#6b7c93] mt-2">Replace YOUR_SLUG with your payment link slug. When deployed, the script uses your domain. Injects a &quot;Pay with Tempo&quot; button.</p>
+                  <p className="text-xs text-[#6b7c93] mt-2">Replace YOUR_SLUG with your payment link slug. When deployed, the script uses your domain. Injects a &quot;Pay with Parrot Pay&quot; button.</p>
                 </TabsContent>
                 <TabsContent value="metadata" className="mt-3">
                   <pre className="bg-[#32325d] text-[#e6ecf1] p-4 text-sm overflow-x-auto font-mono text-xs">

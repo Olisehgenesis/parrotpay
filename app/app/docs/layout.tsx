@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'API Reference — Tempo',
+  title: 'API Reference — Parrot Pay',
   description: 'Create payment links, get status, and list payments programmatically.',
 }
 

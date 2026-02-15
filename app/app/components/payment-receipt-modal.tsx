@@ -46,11 +46,11 @@ export function PaymentReceiptModal({ isOpen, onClose, payment }: PaymentReceipt
         className="w-full max-w-[420px] bg-white shadow-xl border border-[#e6e9ec] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header - Tempo Pay branding */}
+        {/* Header - Parrot Pay branding */}
         <div className="px-6 py-5 border-b border-[#e6e9ec] bg-[#f6f9fc]">
           <div className="flex items-center gap-2 mb-1">
             <img src="/parrot-pay-logo.svg" alt="" width={24} height={24} className="shrink-0" />
-            <span className="text-sm font-semibold text-[#32325d]">Tempo Pay</span>
+            <span className="text-sm font-semibold text-[#32325d]">Parrot Pay</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#16a34a]/10">
@@ -132,7 +132,7 @@ export function PaymentReceiptModal({ isOpen, onClose, payment }: PaymentReceipt
                     {explorerUrl}
                   </a>
                   <p className="text-xs text-[#6b7c93] mt-1">
-                    Scan QR or open link to view transaction on Tempo Explorer
+                    Scan QR or open link to view transaction on explorer
                   </p>
                 </div>
               </div>

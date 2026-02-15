@@ -1,5 +1,5 @@
 /**
- * Tempo / Parrot Pay - Embed script
+ * Parrot Pay - Embed script
  * Add to any site: <script src="https://parrotpay.vercel.app/embed.js" data-merchant="PAYMENT_LINK_SLUG"></script>
  * Opens /pay/{slug} when the button is clicked.
  */
@@ -11,7 +11,7 @@
 
   var merchant = script.getAttribute('data-merchant') || script.getAttribute('data-slug');
   if (!merchant) {
-    console.warn('[Tempo] Missing data-merchant or data-slug. Use: data-merchant="your-payment-link-slug"');
+    console.warn('[Parrot Pay] Missing data-merchant or data-slug. Use: data-merchant="your-payment-link-slug"');
     return;
   }
 
@@ -23,7 +23,7 @@
   if (!base) base = window.location.origin;
   var payUrl = base.replace(/\/$/, '') + '/pay/' + encodeURIComponent(merchant);
   var openInNewTab = script.getAttribute('data-target') !== 'self';
-  var buttonText = script.getAttribute('data-button') || 'Pay with Tempo';
+  var buttonText = script.getAttribute('data-button') || 'Pay with Parrot Pay';
 
   var style = document.createElement('style');
   style.textContent =

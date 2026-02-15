@@ -33,4 +33,4 @@ export function hashFromRaw(raw: string): string | null {
 }
 
 export const API_KEY_SIGNATURE_MESSAGE = (timestamp: string) =>
-  `Create Tempo API key at ${timestamp}. This request will not trigger a blockchain transaction.`
+  `Create Parrot Pay API key at ${timestamp}. This request will not trigger a blockchain transaction.`

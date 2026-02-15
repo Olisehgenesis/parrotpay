@@ -16,7 +16,7 @@ export default function DocsPage() {
       <main className="flex-1 max-w-4xl mx-auto px-6 py-12">
         <h1 className="text-2xl font-semibold text-[#32325d] mb-2">API Reference</h1>
         <p className="text-[#6b7c93] mb-10">
-          Integrate Tempo payments into your backend. Create payment links, check status, and list payments programmatically.
+          Integrate Parrot Pay into your backend. Create payment links, check status, and list payments programmatically.
         </p>
 
         {/* API Keys */}
