@@ -2,15 +2,29 @@
 
 import { usePrivy } from '@privy-io/react-auth'
 import { usePrivyWallet } from '@/app/hooks/use-privy-wallet'
-import { useState, useEffect } from 'react'
+import { useSignMessage } from '@/app/hooks/use-sign-message'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { DisplayAmount } from '@/app/components/display-amount'
 import { formatPaymentAmount } from '@/lib/format-payment-amount'
 import { AppHeader } from '@/app/components/app-header'
+import { API_KEY_SIGNATURE_MESSAGE } from '@/lib/api-key'
+import { Copy, Check, Key, Trash2 } from 'lucide-react'
+
+type ApiKey = {
+  id: string
+  name: string | null
+  keyPrefix: string
+  walletAddress: string
+  createdAt: string
+  _count?: { paymentLinks: number }
+}
 
 type Payment = {
   id: string
@@ -42,7 +56,21 @@ function DashboardContent() {
   const [sent, setSent] = useState<Payment[]>([])
   const [received, setReceived] = useState<Payment[]>([])
   const [links, setLinks] = useState<PaymentLink[]>([])
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([])
   const [loading, setLoading] = useState(true)
+  const [creatingKey, setCreatingKey] = useState(false)
+  const [newKeyName, setNewKeyName] = useState('')
+  const [createdKey, setCreatedKey] = useState<string | null>(null)
+  const [keyCopied, setKeyCopied] = useState(false)
+  const { signMessage } = useSignMessage()
+
+  const loadApiKeys = useCallback(() => {
+    if (!address) return
+    fetch(`/api/api-keys?address=${address.toLowerCase()}`)
+      .then((r) => r.json())
+      .then((k) => setApiKeys(Array.isArray(k) ? k : []))
+      .catch(console.error)
+  }, [address])
 
   useEffect(() => {
     if (!address) {
@@ -54,11 +82,13 @@ function DashboardContent() {
       fetch(`/api/payments/sent?address=${addr}`).then((r) => r.json()),
       fetch(`/api/payments/received?address=${addr}`).then((r) => r.json()),
       fetch(`/api/payment-links?address=${addr}`).then((r) => r.json()),
+      fetch(`/api/api-keys?address=${addr}`).then((r) => r.json()),
     ])
-      .then(([s, r, l]) => {
+      .then(([s, r, l, k]) => {
         setSent(Array.isArray(s) ? s : [])
         setReceived(Array.isArray(r) ? r : [])
         setLinks(Array.isArray(l) ? l : [])
+        setApiKeys(Array.isArray(k) ? k : [])
       })
       .catch(console.error)
       .finally(() => setLoading(false))
@@ -85,10 +115,11 @@ function DashboardContent() {
         <div className="max-w-4xl mx-auto">
           <h1 className="text-xl font-semibold text-[#32325d] mb-6">Dashboard</h1>
           <Tabs defaultValue="paid" className="space-y-6">
-            <TabsList className="inline-flex h-10 border border-[#e6e9ec] bg-white p-1">
+            <TabsList className="inline-flex h-10 border border-[#e6e9ec] bg-white p-1 flex-wrap">
               <TabsTrigger value="paid" className="data-[state=active]:bg-[#635bff] data-[state=active]:text-white data-[state=active]:shadow-sm">Received</TabsTrigger>
               <TabsTrigger value="pay" className="data-[state=active]:bg-[#635bff] data-[state=active]:text-white data-[state=active]:shadow-sm">Sent</TabsTrigger>
               <TabsTrigger value="links" className="data-[state=active]:bg-[#635bff] data-[state=active]:text-white data-[state=active]:shadow-sm">Payment links</TabsTrigger>
+              <TabsTrigger value="keys" className="data-[state=active]:bg-[#635bff] data-[state=active]:text-white data-[state=active]:shadow-sm">API keys</TabsTrigger>
             </TabsList>
 
             <TabsContent value="links" className="space-y-4 mt-6">
@@ -183,6 +214,120 @@ function DashboardContent() {
                         ))}
                       </TableBody>
                     </Table>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="keys" className="space-y-4 mt-6">
+              <Card className="border-[#e6e9ec] shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Key className="h-5 w-5" />
+                    API keys
+                  </CardTitle>
+                  <CardDescription>Create keys to create payment links programmatically. Each link is tied to the key that created it.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {createdKey ? (
+                    <div className="border border-[#16a34a]/30 bg-[#dcfce7]/50 p-4 space-y-3">
+                      <p className="text-sm font-medium text-[#166534]">API key created. Copy it now — it won&apos;t be shown again.</p>
+                      <div className="flex gap-2">
+                        <Input readOnly value={createdKey} className="font-mono text-sm" />
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          onClick={async () => {
+                            await navigator.clipboard.writeText(createdKey)
+                            setKeyCopied(true)
+                            setTimeout(() => setKeyCopied(false), 2000)
+                          }}
+                        >
+                          {keyCopied ? <Check className="h-4 w-4 text-[#16a34a]" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => { setCreatedKey(null); loadApiKeys() }}>
+                        Done
+                      </Button>
+                    </div>
+                  ) : (
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault()
+                        if (!address || creatingKey) return
+                        setCreatingKey(true)
+                        try {
+                          const timestamp = new Date().toISOString()
+                          const message = API_KEY_SIGNATURE_MESSAGE(timestamp)
+                          const signature = await signMessage(message)
+                          const res = await fetch('/api/api-keys', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              name: newKeyName || undefined,
+                              walletAddress: address,
+                              signature,
+                              message,
+                            }),
+                          })
+                          const data = await res.json()
+                          if (data.key) {
+                            setCreatedKey(data.key)
+                            setNewKeyName('')
+                          } else if (data.error) {
+                            alert(data.error)
+                          }
+                        } catch (err) {
+                          alert(err instanceof Error ? err.message : 'Failed to create key')
+                        } finally {
+                          setCreatingKey(false)
+                        }
+                      }}
+                      className="flex gap-2 items-end"
+                    >
+                      <div className="flex-1 space-y-2">
+                        <Label htmlFor="keyName">Key name (optional)</Label>
+                        <Input
+                          id="keyName"
+                          placeholder="e.g. Production"
+                          value={newKeyName}
+                          onChange={(e) => setNewKeyName(e.target.value)}
+                        />
+                      </div>
+                      <Button type="submit" disabled={creatingKey} className="bg-[#635bff] hover:bg-[#5851ea]">
+                        {creatingKey ? 'Creating...' : 'Create API key'}
+                      </Button>
+                    </form>
+                  )}
+                  {apiKeys.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">Your keys</p>
+                      <div className="space-y-2">
+                        {apiKeys.map((k) => (
+                          <div key={k.id} className="flex items-center justify-between border border-[#e6e9ec] p-3 bg-[#fafbfc]">
+                            <div>
+                              <p className="font-mono text-sm">{k.keyPrefix}</p>
+                              <p className="text-xs text-[#6b7c93]">
+                                {k.name || 'Unnamed'} • {k._count?.paymentLinks ?? 0} links
+                              </p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-[#dc2626] hover:text-[#dc2626] hover:bg-[#fef2f2]"
+                              onClick={async () => {
+                                if (!confirm('Revoke this API key? It will stop working immediately.')) return
+                                const res = await fetch(`/api/api-keys/${k.id}?address=${address?.toLowerCase()}`, { method: 'DELETE' })
+                                if (res.ok) loadApiKeys()
+                                else alert((await res.json()).error)
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </CardContent>
               </Card>

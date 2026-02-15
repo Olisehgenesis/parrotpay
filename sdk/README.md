@@ -1,20 +1,20 @@
-# @parrotpay/sdk
+# parrotpay-sdk
 
 Add Tempo payments to any React site in one line. Built for **Tempo Testnet**.
 
 ## Install
 
 ```bash
-npm install @parrotpay/sdk
+npm install parrotpay-sdk
 # or
-pnpm add @parrotpay/sdk
+pnpm add parrotpay-sdk
 ```
 
 ## Usage
 
 ```tsx
-import { CheckoutWidget, ALPHA_USD } from '@parrotpay/sdk'
-import '@parrotpay/sdk/dist/index.css'
+import { CheckoutWidget, ALPHA_USD } from 'parrotpay-sdk'
+import 'parrotpay-sdk/dist/index.css'
 
 // In your component:
 <CheckoutWidget

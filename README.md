@@ -52,6 +52,7 @@ cd app && pnpm db:migrate
 - `/` — Landing, create payment links, demo checkout
 - `/dashboard` — Pay, Paid, Payment links (connect wallet)
 - `/pay/[slug]` — Stripe-like payment page
+- `/docs` — API reference for programmatic access
 - `/embed.js` — Embed script for any site (add to your deployed app)
 
 ## Embed (script tag)
@@ -63,6 +64,17 @@ Add payments to any site with one line. After deploying, add to your external si
 ```
 
 Options: `data-base` (override base URL), `data-button` (button text), `data-target="self"` (same tab), `data-container` (CSS selector for button placement).
+
+## API (programmatic)
+
+See `/docs` for full reference. Key endpoints:
+
+- `POST /api/payment-links` — Create payment link
+- `GET /api/payment-links?address=0x...` — List links
+- `GET /api/payment-links/[slug]` — Get link
+- `GET /api/payments/[id]` — Get payment status
+- `GET /api/payments/received?address=0x...` — List received
+- `GET /api/payments/sent?address=0x...` — List sent
 
 ## Tempo Testnet
 

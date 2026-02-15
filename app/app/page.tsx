@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react'
 import { usePrivy } from '@privy-io/react-auth'
 import { usePrivyWallet } from '@/app/hooks/use-privy-wallet'
-import { CheckoutWidget, ALPHA_USD } from '@parrotpay/sdk'
+import { CheckoutWidget, ALPHA_USD } from 'parrotpay-sdk'
 import { parseUnits } from 'viem'
 import type { Address } from 'viem'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import PhoneInput from 'react-phone-number-input'
 import 'react-phone-number-input/style.css'
+import Link from 'next/link'
 import { AppHeader } from '@/app/components/app-header'
 
 const DEMO_MERCHANT = '0x031891A61200FedDd622EbACC10734BC90093B2A' as Address
@@ -113,7 +114,7 @@ export default function Home() {
                 </TabsList>
                 <TabsContent value="sdk" className="mt-3">
                   <pre className="bg-[#32325d] text-[#e6ecf1] p-4 text-sm overflow-x-auto font-mono">
-                    {`import { CheckoutWidget } from '@parrotpay/sdk'`}
+                    {`import { CheckoutWidget } from 'parrotpay-sdk'`}
                   </pre>
                 </TabsContent>
                 <TabsContent value="embed" className="mt-3">
@@ -137,7 +138,8 @@ export default function Home() {
             </div>
 
             <p className="text-sm text-[#6b7c93] mt-4">
-              One line. Payments. Done.
+              One line. Payments. Done.{' '}
+              <Link href="/docs" className="text-[#635bff] hover:underline">API docs</Link> for programmatic access.
             </p>
 
             {/* Pay by phone */}

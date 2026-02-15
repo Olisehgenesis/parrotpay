@@ -1,5 +1,5 @@
 {
-  "name": "@parrotpay/sdk",
+  "name": "parrotpay-sdk",
   "version": "0.1.0",
   "description": "Add Tempo payments to any site in one line",
   "main": "dist/index.js",

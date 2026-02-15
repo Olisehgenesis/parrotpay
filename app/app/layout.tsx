@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { Providers } from './providers'
-import '@parrotpay/sdk/dist/index.css'
+import 'parrotpay-sdk/dist/index.css'
 import './globals.css'
 
 export const metadata: Metadata = {

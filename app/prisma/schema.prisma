@@ -22,6 +22,17 @@ model User {
   paymentsReceived Payment[]  @relation("Payee")
 }
 
+model ApiKey {
+  id              String   @id @default(cuid())
+  name            String?  // e.g. "Production", "Staging"
+  keyHash         String   @unique // SHA-256 hash of the raw key
+  keyPrefix       String   // e.g. "pk_live_abc1" (first 12 chars for display)
+  walletAddress   String   // owner wallet
+  createdAt       DateTime @default(now())
+
+  paymentLinks    PaymentLink[]
+}
+
 model PaymentLink {
   id              String   @id @default(cuid())
   slug            String   @unique
@@ -41,6 +52,9 @@ model PaymentLink {
 
   userId          String?
   user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  apiKeyId        String?
+  apiKey          ApiKey?  @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+  creatorAddress  String?  // wallet that created this link (API key owner or web user)
   payments        Payment[]
 }
 

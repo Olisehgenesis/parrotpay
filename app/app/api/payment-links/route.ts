@@ -2,15 +2,39 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { currencyToUsd } from '@/lib/currency'
 import { randomBytes } from 'crypto'
+import { extractApiKey, hashFromRaw } from '@/lib/api-key'
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
     const address = searchParams.get('address')?.toLowerCase()
+    const rawKey = extractApiKey(req)
+    const keyHash = rawKey ? hashFromRaw(rawKey) : null
+
+    let where: Record<string, unknown> = {}
+    if (keyHash) {
+      const apiKey = await prisma.apiKey.findUnique({
+        where: { keyHash },
+      })
+      if (!apiKey) {
+        return NextResponse.json({ error: 'Invalid API key' }, { status: 401 })
+      }
+      where = {
+        OR: [
+          { apiKeyId: apiKey.id },
+          { creatorAddress: apiKey.walletAddress },
+          { recipientAddress: apiKey.walletAddress },
+        ],
+      }
+    } else if (address) {
+      where = { recipientAddress: address }
+    } else {
+      return NextResponse.json({ error: 'address query param or API key required' }, { status: 400 })
+    }
 
     const links = await prisma.paymentLink.findMany({
-      where: address ? { recipientAddress: address } : undefined,
-      include: { payments: true },
+      where,
+      include: { payments: true, apiKey: { select: { keyPrefix: true, name: true } } },
       orderBy: { createdAt: 'desc' },
     })
     return NextResponse.json(links)
@@ -23,7 +47,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { title, amount, currency, recipientAddress, type, memo, userId, meal, phone, metadata, collectCustomerInfo } = body
+    const { title, amount, currency, recipientAddress, type, memo, userId, meal, phone, metadata, collectCustomerInfo, creatorAddress } = body
 
     if (!amount || !recipientAddress) {
       return NextResponse.json({ error: 'amount and recipientAddress required' }, { status: 400 })
@@ -32,6 +56,22 @@ export async function POST(req: NextRequest) {
     const amountNum = parseFloat(String(amount))
     if (isNaN(amountNum)) {
       return NextResponse.json({ error: 'Invalid amount' }, { status: 400 })
+    }
+
+    const rawKey = extractApiKey(req)
+    const keyHash = rawKey ? hashFromRaw(rawKey) : null
+    let apiKeyId: string | undefined
+    let creatorAddr: string | undefined = creatorAddress?.toLowerCase()
+
+    if (keyHash) {
+      const apiKey = await prisma.apiKey.findUnique({
+        where: { keyHash },
+      })
+      if (!apiKey) {
+        return NextResponse.json({ error: 'Invalid API key' }, { status: 401 })
+      }
+      apiKeyId = apiKey.id
+      creatorAddr = apiKey.walletAddress
     }
 
     const currencyCode = (currency || 'usd').toLowerCase()
@@ -66,6 +106,8 @@ export async function POST(req: NextRequest) {
         phone: phone || null,
         metadata: finalMetadata,
         userId: userId || undefined,
+        apiKeyId: apiKeyId || undefined,
+        creatorAddress: creatorAddr || undefined,
       },
     })
 

@@ -22,6 +22,12 @@ export function AppHeader({ authenticated, onLogin, showNavLinks = true }: AppHe
           <span className="text-lg font-semibold text-[#32325d]">Tempo</span>
         </Link>
         <nav className="flex items-center gap-4">
+          <Link
+            href="/docs"
+            className="text-sm font-medium text-[#6b7c93] no-underline transition-colors hover:text-[#32325d] hidden sm:inline"
+          >
+            API Docs
+          </Link>
           {authenticated && showNavLinks && (
             <>
               <Link

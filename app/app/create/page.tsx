@@ -116,6 +116,7 @@ export default function CreatePaymentLinkPage() {
           amount,
           currency,
           recipientAddress: recipient,
+          creatorAddress: recipient,
           type: recurrent ? 'SUBSCRIPTION' : 'ONE_TIME',
           collectCustomerInfo: { name: collectName, email: collectEmail, phone: collectPhone },
           meal: meal || undefined,

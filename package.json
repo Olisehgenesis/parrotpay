@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "pnpm --filter parrot-pay-app dev",
     "build": "pnpm run build:sdk && pnpm run build:app",
-    "build:sdk": "pnpm --filter @parrotpay/sdk build",
+    "build:sdk": "pnpm --filter parrotpay-sdk build",
     "build:app": "pnpm --filter parrot-pay-app build",
-    "publish:sdk": "pnpm --filter @parrotpay/sdk publish --no-git-checks"
+    "publish:sdk": "pnpm --filter parrotpay-sdk publish --no-git-checks"
   }
 }

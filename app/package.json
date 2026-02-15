@@ -14,7 +14,7 @@
     "send-tip": "tsx scripts/send-tip.ts"
   },
   "dependencies": {
-    "@parrotpay/sdk": "workspace:*",
+    "parrotpay-sdk": "^0.1.0",
     "@prisma/client": "^5.22.0",
     "@privy-io/react-auth": "^3.13.1",
     "@privy-io/wagmi": "^4.0.1",
