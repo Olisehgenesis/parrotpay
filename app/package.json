@@ -10,7 +10,8 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "send-tip": "tsx scripts/send-tip.ts"
   },
   "dependencies": {
     "@parrotpay/sdk": "workspace:*",
@@ -40,9 +41,11 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "autoprefixer": "^10.4.24",
+    "dotenv": "^17.3.1",
     "postcss": "^8.5.6",
     "prisma": "^5.22.0",
     "tailwindcss": "3",
+    "tsx": "^4.21.0",
     "typescript": "^5.0.0"
   }
 }

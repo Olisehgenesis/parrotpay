@@ -52,6 +52,17 @@ cd app && pnpm db:migrate
 - `/` — Landing, create payment links, demo checkout
 - `/dashboard` — Pay, Paid, Payment links (connect wallet)
 - `/pay/[slug]` — Stripe-like payment page
+- `/embed.js` — Embed script for any site (add to your deployed app)
+
+## Embed (script tag)
+
+Add payments to any site with one line. After deploying, add to your external site:
+
+```html
+<script src="https://YOUR_DEPLOYED_URL/embed.js" data-merchant="YOUR_PAYMENT_LINK_SLUG"></script>
+```
+
+Options: `data-base` (override base URL), `data-button` (button text), `data-target="self"` (same tab), `data-container` (CSS selector for button placement).
 
 ## Tempo Testnet
 

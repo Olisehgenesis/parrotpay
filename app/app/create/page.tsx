@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePrivy } from '@privy-io/react-auth'
-import { useAccount } from 'wagmi'
+import { usePrivyWallet } from '@/app/hooks/use-privy-wallet'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Copy, Check, Wallet, Plus, X } from 'lucide-react'
-import { WalletHeaderButton } from '@/app/components/wallet-header-button'
+import { AppHeader } from '@/app/components/app-header'
 import { CURRENCIES } from '@/lib/currencies'
 
 export type CustomFieldType = 'text' | 'date' | 'select' | 'image'
@@ -30,7 +30,7 @@ export default function CreatePaymentLinkPage() {
   useEffect(() => setMounted(true), [])
 
   const { login, authenticated } = usePrivy()
-  const { address } = useAccount()
+  const { address } = usePrivyWallet()
 
   const [linkName, setLinkName] = useState('')
   const [amount, setAmount] = useState('')
@@ -145,55 +145,39 @@ export default function CreatePaymentLinkPage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <header className="border-b bg-background">
-          <div className="max-w-[1100px] mx-auto px-6 py-4 flex items-center justify-between">
-            <Link href="/" className="text-xl font-bold text-primary no-underline">Parrot Pay</Link>
-          </div>
-        </header>
-        <main className="flex-1 py-20 text-center">
-          <p className="text-muted-foreground">Loading...</p>
+      <div className="min-h-screen flex flex-col bg-[#f6f9fc]">
+        <AppHeader authenticated={false} showNavLinks={false} />
+        <main className="flex-1 py-24 text-center">
+          <p className="text-[#6b7c93]">Loading...</p>
         </main>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b bg-background">
-        <div className="max-w-[1100px] mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-primary no-underline">Parrot Pay</Link>
-          <nav className="flex items-center gap-2">
-            {authenticated && (
-              <Button variant="ghost" asChild>
-                <Link href="/dashboard">Dashboard</Link>
-              </Button>
-            )}
-            <WalletHeaderButton authenticated={authenticated} onLogin={login} />
-          </nav>
-        </div>
-      </header>
+    <div className="min-h-screen flex flex-col bg-[#f6f9fc]">
+      <AppHeader authenticated={authenticated} onLogin={login} showNavLinks />
 
-      <main className="flex-1 py-12 px-6">
+      <main className="flex-1 py-10 px-6">
         <div className="max-w-[480px] mx-auto">
-          <h2 className="text-2xl font-bold mb-6">Create payment link</h2>
+          <h2 className="text-xl font-semibold text-[#32325d] mb-6">Create payment link</h2>
 
-          <Card>
+          <Card className="border-[#e6e9ec] shadow-sm">
             <CardHeader>
               <CardTitle>New payment link</CardTitle>
               <CardDescription>Share the link for customers to pay you</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {!authenticated ? (
-                <div className="rounded-lg border border-dashed bg-muted/50 p-6 text-center">
-                  <Wallet className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
-                  <p className="text-sm font-medium mb-2">Connect your wallet to create payment links</p>
-                  <Button onClick={login} size="lg">
-                    Connect Wallet
+                <div className="border border-dashed border-[#e6e9ec] bg-[#fafbfc] p-6 text-center">
+                  <Wallet className="mx-auto h-10 w-10 text-[#6b7c93] mb-3" />
+                  <p className="text-sm font-medium text-[#32325d] mb-2">Connect your wallet to create payment links</p>
+                  <Button onClick={login} size="lg" className="bg-[#635bff] hover:bg-[#5851ea]">
+                    Connect wallet
                   </Button>
                 </div>
               ) : (
-                <WalletHeaderButton authenticated={true} onLogin={login} className="w-full justify-start !bg-muted/50 !border-muted" />
+                <p className="text-sm text-[#6b7c93]">Connected — your wallet will receive payments from this link.</p>
               )}
 
               <div className="space-y-2">
@@ -270,17 +254,17 @@ export default function CreatePaymentLinkPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="meal">Email <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                <Label htmlFor="meal">Order notes <span className="text-muted-foreground font-normal">(optional)</span></Label>
                 <Input
                   id="meal"
-                  placeholder="e.g. customer@example.com"
+                  placeholder="e.g. Lunch order, Table 5"
                   value={meal}
                   onChange={(e) => setMeal(e.target.value)}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone number <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                <Label htmlFor="phone">Contact phone <span className="text-muted-foreground font-normal">(optional)</span></Label>
                 <Input
                   id="phone"
                   placeholder="e.g. +1234567890"
@@ -304,7 +288,7 @@ export default function CreatePaymentLinkPage() {
                       <button
                         type="button"
                         onClick={() => removeCustomField(f.id)}
-                        className="rounded p-0.5 hover:bg-muted"
+                        className="p-0.5 hover:bg-muted"
                         aria-label="Remove"
                       >
                         <X className="h-3 w-3" />
@@ -327,7 +311,7 @@ export default function CreatePaymentLinkPage() {
               {addModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setAddModalOpen(false)}>
                   <div
-                    className="max-w-md w-full rounded-lg border bg-background p-6 shadow-lg"
+                    className="max-w-md w-full border bg-background p-6 shadow-lg"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <form
@@ -402,7 +386,7 @@ export default function CreatePaymentLinkPage() {
                           {(newField.options || []).map((opt) => (
                             <Badge key={opt} variant="outline" className="gap-1">
                               {opt}
-                              <button type="button" onClick={() => removeOption(opt)} className="rounded p-0.5 hover:bg-muted">
+                              <button type="button" onClick={() => removeOption(opt)} className="p-0.5 hover:bg-muted">
                                 <X className="h-3 w-3" />
                               </button>
                             </Badge>
@@ -427,7 +411,7 @@ export default function CreatePaymentLinkPage() {
               <Button
                 onClick={handleCreate}
                 disabled={!address || !amount || creating}
-                className="w-full"
+                className="w-full bg-[#635bff] hover:bg-[#5851ea]"
               >
                 {creating ? 'Creating...' : 'Create payment link'}
               </Button>
@@ -437,7 +421,7 @@ export default function CreatePaymentLinkPage() {
               )}
 
               {createdLink && (
-                <Card className="border bg-muted/50">
+                <Card className="border border-[#e6e9ec] bg-[#fafbfc]">
                   <CardContent className="pt-4">
                     <p className="text-sm text-muted-foreground mb-2">Your link:</p>
                     <div className="flex items-center gap-2">
@@ -445,7 +429,7 @@ export default function CreatePaymentLinkPage() {
                         href={createdLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-primary text-sm break-all hover:underline flex-1 min-w-0"
+                        className="text-[#635bff] text-sm break-all hover:underline flex-1 min-w-0"
                       >
                         {createdLink}
                       </a>

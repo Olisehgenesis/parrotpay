@@ -4,7 +4,7 @@ import '@parrotpay/sdk/dist/index.css'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Parrot Pay — Add Tempo payments in one line',
+  title: 'Tempo — Add payments to any site in one line',
   description: 'Drop in our checkout widget. No backend required. Built for Tempo Testnet.',
 }
 

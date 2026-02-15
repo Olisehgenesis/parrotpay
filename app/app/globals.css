@@ -1,22 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Parrot Pay - Clean Web3 color scheme */
+/* Stripe-inspired design tokens */
 :root {
-  --parrot-primary: #6366F1;
-  --parrot-primary-hover: #4F46E5;
-  --parrot-primary-light: #EAE9FF;
-  --parrot-bg: #FFFFFF;
-  --parrot-bg-section: #F5F6FA;
-  --parrot-border: #E5E7EB;
-  --parrot-text: #111827;
-  --parrot-text-secondary: #6B7280;
-  --parrot-text-muted: #9CA3AF;
-  --parrot-success: #16A34A;
-  --parrot-warning: #F59E0B;
-  --parrot-error: #DC2626;
-  --parrot-info: #0EA5E9;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --stripe-primary: #635bff;
+  --stripe-primary-hover: #5851ea;
+  --stripe-text: #32325d;
+  --stripe-text-secondary: #6b7c93;
+  --stripe-border: #e6e9ec;
+  --stripe-bg: #f6f9fc;
+  --stripe-success: #16a34a;
+  --parrot-primary: #635bff;
+  --parrot-primary-hover: #5851ea;
+  --parrot-primary-light: #eae9ff;
+  --parrot-bg: #ffffff;
+  --parrot-bg-section: #f6f9fc;
+  --parrot-border: #e6e9ec;
+  --parrot-text: #32325d;
+  --parrot-text-secondary: #6b7c93;
+  --parrot-text-muted: #9ca3af;
+  --parrot-success: #16a34a;
+  --parrot-warning: #f59e0b;
+  --parrot-error: #dc2626;
+  --parrot-info: #0ea5e9;
 }
 
 * {
@@ -25,7 +35,7 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: var(--parrot-bg);
@@ -386,29 +396,32 @@ body {
 }
 
 /* Pay page - Phone input with country code & flag */
-.pay-phone-input.PhoneInput {
-  display: flex;
-  border: 1px solid #e6e9ec;
-  border-radius: 6px;
+/* Phone input - Stripe-style */
+.pay-phone-input {
+  border: 1px solid var(--stripe-border);
   overflow: hidden;
+  background: white;
+}
+.pay-phone-input .PhoneInput {
+  display: flex;
 }
 .pay-phone-input .PhoneInputCountry {
-  padding: 0 10px;
+  padding: 0 12px;
   height: 44px;
-  border-right: 1px solid #e6e9ec;
-  background: #fafafa;
+  border-right: 1px solid var(--stripe-border);
+  background: #fafbfc;
 }
 .pay-phone-input .PhoneInputInput {
   flex: 1;
   height: 44px;
-  padding: 0 12px;
+  padding: 0 14px;
   border: none;
   font-size: 14px;
   min-width: 0;
 }
 .pay-phone-input .PhoneInputInput:focus {
   outline: none;
-  box-shadow: 0 0 0 2px #635bff;
+  box-shadow: 0 0 0 2px var(--stripe-primary);
 }
 
 @layer base {

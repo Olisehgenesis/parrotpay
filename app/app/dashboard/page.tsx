@@ -1,16 +1,16 @@
 'use client'
 
 import { usePrivy } from '@privy-io/react-auth'
-import { useAccount } from 'wagmi'
+import { usePrivyWallet } from '@/app/hooks/use-privy-wallet'
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { DisplayAmount } from '@/app/components/display-amount'
-import { WalletHeaderButton } from '@/app/components/wallet-header-button'
+import { formatPaymentAmount } from '@/lib/format-payment-amount'
+import { AppHeader } from '@/app/components/app-header'
 
 type Payment = {
   id: string
@@ -37,8 +37,8 @@ type PaymentLink = {
 }
 
 function DashboardContent() {
-  const { authenticated } = usePrivy()
-  const { address } = useAccount()
+  const { authenticated, login } = usePrivy()
+  const { address } = usePrivyWallet()
   const [sent, setSent] = useState<Payment[]>([])
   const [received, setReceived] = useState<Payment[]>([])
   const [links, setLinks] = useState<PaymentLink[]>([])
@@ -66,45 +66,33 @@ function DashboardContent() {
 
   if (!authenticated) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <header className="border-b bg-background">
-          <div className="max-w-[1100px] mx-auto px-6 py-4 flex items-center justify-between">
-            <Link href="/" className="text-xl font-bold text-primary no-underline">Parrot Pay</Link>
-          </div>
-        </header>
-        <main className="flex-1 py-20 text-center">
-          <h2 className="text-2xl font-bold mb-2">Connect your wallet to view your dashboard</h2>
-          <p className="text-muted-foreground">See payments you&apos;ve sent and received</p>
+      <div className="min-h-screen flex flex-col bg-[#f6f9fc]">
+        <AppHeader authenticated={false} onLogin={login} showNavLinks={false} />
+        <main className="flex-1 py-24 px-6 text-center">
+          <h2 className="text-2xl font-semibold text-[#32325d] mb-2">Connect your wallet to view your dashboard</h2>
+          <p className="text-[#6b7c93] mb-8">See payments you&apos;ve sent and received</p>
+          <Button onClick={login} className="bg-[#635bff] hover:bg-[#5851ea]">Connect wallet</Button>
         </main>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b bg-background">
-        <div className="max-w-[1100px] mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-primary no-underline">Parrot Pay</Link>
-          <nav className="flex items-center gap-3">
-            <Button variant="ghost" asChild>
-              <Link href="/create">Create payment link</Link>
-            </Button>
-            <WalletHeaderButton authenticated={authenticated} onLogin={() => {}} />
-          </nav>
-        </div>
-      </header>
+    <div className="min-h-screen flex flex-col bg-[#f6f9fc]">
+      <AppHeader authenticated={authenticated} onLogin={login} showNavLinks />
 
-      <main className="flex-1 py-6 px-6">
-        <div className="max-w-[1100px] mx-auto">
+      <main className="flex-1 py-8 px-6">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-xl font-semibold text-[#32325d] mb-6">Dashboard</h1>
           <Tabs defaultValue="paid" className="space-y-6">
-            <TabsList className="grid w-full max-w-md grid-cols-3">
-              <TabsTrigger value="paid">Paid (received)</TabsTrigger>
-              <TabsTrigger value="pay">Pay (sent)</TabsTrigger>
-              <TabsTrigger value="links">Payment links</TabsTrigger>
+            <TabsList className="inline-flex h-10 border border-[#e6e9ec] bg-white p-1">
+              <TabsTrigger value="paid" className="data-[state=active]:bg-[#635bff] data-[state=active]:text-white data-[state=active]:shadow-sm">Received</TabsTrigger>
+              <TabsTrigger value="pay" className="data-[state=active]:bg-[#635bff] data-[state=active]:text-white data-[state=active]:shadow-sm">Sent</TabsTrigger>
+              <TabsTrigger value="links" className="data-[state=active]:bg-[#635bff] data-[state=active]:text-white data-[state=active]:shadow-sm">Payment links</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="links" className="space-y-4">
-              <Card>
+            <TabsContent value="links" className="space-y-4 mt-6">
+              <Card className="border-[#e6e9ec] shadow-sm">
                 <CardHeader>
                   <CardTitle>Your payment links</CardTitle>
                   <CardDescription>Links you created for receiving payments</CardDescription>
@@ -137,8 +125,8 @@ function DashboardContent() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="paid" className="space-y-4">
-              <Card>
+            <TabsContent value="paid" className="space-y-4 mt-6">
+              <Card className="border-[#e6e9ec] shadow-sm">
                 <CardHeader>
                   <CardTitle>Received</CardTitle>
                   <CardDescription>Payments you received</CardDescription>
@@ -163,7 +151,7 @@ function DashboardContent() {
                       <TableBody>
                         {received.map((p) => (
                           <TableRow key={p.id}>
-                            <TableCell>${p.amount} USD</TableCell>
+                            <TableCell>${formatPaymentAmount(p.amount)} USD</TableCell>
                             <TableCell className="font-mono text-sm">{p.fromAddress?.slice(0, 8)}...</TableCell>
                             <TableCell className="text-sm">
                               {(p.customerName || p.customerEmail || p.customerPhone) ? (
@@ -200,8 +188,8 @@ function DashboardContent() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="pay" className="space-y-4">
-              <Card>
+            <TabsContent value="pay" className="space-y-4 mt-6">
+              <Card className="border-[#e6e9ec] shadow-sm">
                 <CardHeader>
                   <CardTitle>Sent</CardTitle>
                   <CardDescription>Payments you sent</CardDescription>
@@ -225,7 +213,7 @@ function DashboardContent() {
                       <TableBody>
                         {sent.map((p) => (
                           <TableRow key={p.id}>
-                            <TableCell>${p.amount} USD</TableCell>
+                            <TableCell>${formatPaymentAmount(p.amount)} USD</TableCell>
                             <TableCell className="font-mono text-sm">{p.toAddress?.slice(0, 8)}...</TableCell>
                             <TableCell>
                               <Badge variant={p.status === 'COMPLETED' ? 'default' : 'secondary'}>
@@ -263,14 +251,10 @@ export default function DashboardPage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <header className="border-b bg-background">
-          <div className="max-w-[1100px] mx-auto px-6 py-4 flex items-center justify-between">
-            <Link href="/" className="text-xl font-bold text-primary no-underline">Parrot Pay</Link>
-          </div>
-        </header>
-        <main className="flex-1 py-20 text-center">
-          <p className="text-muted-foreground">Loading...</p>
+      <div className="min-h-screen flex flex-col bg-[#f6f9fc]">
+        <AppHeader authenticated={false} showNavLinks={false} />
+        <main className="flex-1 py-24 text-center">
+          <p className="text-[#6b7c93]">Loading...</p>
         </main>
       </div>
     )

@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { useWallets } from '@privy-io/react-auth'
-import { useAccount } from 'wagmi'
-import { Copy, Check, Wallet, X } from 'lucide-react'
+import { usePrivy, useWallets } from '@privy-io/react-auth'
+import { usePrivyWallet } from '@/app/hooks/use-privy-wallet'
+import { Copy, Check, LogOut, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useWalletBalances } from '@/app/hooks/use-wallet-balances'
 
@@ -13,10 +13,13 @@ type WalletModalProps = {
 }
 
 export function WalletModal({ isOpen, onClose }: WalletModalProps) {
-  const { address } = useAccount()
+  const { address } = usePrivyWallet()
+  const { logout } = usePrivy()
   const { wallets } = useWallets()
   const { balances, loading } = useWalletBalances(address ?? undefined)
   const [copied, setCopied] = useState(false)
+
+  const alphaBalances = balances.filter((b) => b.symbol === 'AlphaUSD')
 
   const copyAddress = async () => {
     if (!address) return
@@ -25,20 +28,25 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const handleDisconnect = () => {
+    onClose()
+    logout()
+  }
+
   if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
       <div
-        className="w-full max-w-md rounded-xl bg-white shadow-xl border border-[#e6e9ec] overflow-hidden"
+        className="w-full max-w-md bg-white shadow-xl border border-[#e6e9ec] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#e6e9ec]">
-          <h3 className="font-semibold text-[#32325d]">Wallet</h3>
+          <h3 className="font-semibold text-[#32325d]">Tempo</h3>
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-[#f6f9fc] text-muted-foreground"
+            className="p-2 hover:bg-[#f6f9fc] text-muted-foreground"
             aria-label="Close"
           >
             <X className="h-5 w-5" />
@@ -46,29 +54,11 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
         </div>
 
         <div className="px-6 py-4 space-y-4">
-          {/* Wallets list */}
-          <div>
-            <h4 className="text-sm font-medium text-[#6b7c93] mb-2">Connected wallets</h4>
-            <div className="space-y-2">
-              {wallets.map((w) => (
-                <div
-                  key={w.address}
-                  className="flex items-center gap-3 rounded-lg border border-[#e6e9ec] px-4 py-3 bg-[#fafbfc]"
-                >
-                  <Wallet className="h-5 w-5 text-[#635bff]" />
-                  <span className="font-mono text-sm text-[#32325d] truncate flex-1">
-                    {w.address?.slice(0, 10)}...{w.address?.slice(-8)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* Address + copy */}
           {address && (
             <div>
               <h4 className="text-sm font-medium text-[#6b7c93] mb-2">Address</h4>
-              <div className="flex items-center gap-2 rounded-lg border border-[#e6e9ec] px-4 py-3 bg-[#fafbfc]">
+              <div className="flex items-center gap-2 border border-[#e6e9ec] px-4 py-3 bg-[#fafbfc]">
                 <span className="font-mono text-sm text-[#32325d] truncate flex-1">{address}</span>
                 <Button
                   variant="ghost"
@@ -83,17 +73,17 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
             </div>
           )}
 
-          {/* Token balances */}
+          {/* AlphaUSD balance only */}
           <div>
-            <h4 className="text-sm font-medium text-[#6b7c93] mb-2">Token balances</h4>
+            <h4 className="text-sm font-medium text-[#6b7c93] mb-2">Balance</h4>
             {loading ? (
               <p className="text-sm text-muted-foreground">Loading...</p>
             ) : (
               <div className="space-y-2">
-                {balances.map((b) => (
+                {alphaBalances.map((b) => (
                   <div
                     key={b.address}
-                    className="flex items-center justify-between rounded-lg border border-[#e6e9ec] px-4 py-3 bg-[#fafbfc]"
+                    className="flex items-center justify-between border border-[#e6e9ec] px-4 py-3 bg-[#fafbfc]"
                   >
                     <span className="font-medium text-[#32325d]">{b.symbol}</span>
                     <span className="font-mono text-sm text-[#6b7c93]">
@@ -101,9 +91,25 @@ export function WalletModal({ isOpen, onClose }: WalletModalProps) {
                     </span>
                   </div>
                 ))}
+                {alphaBalances.length === 0 && (
+                  <div className="flex items-center justify-between border border-[#e6e9ec] px-4 py-3 bg-[#fafbfc]">
+                    <span className="font-medium text-[#32325d]">AlphaUSD</span>
+                    <span className="font-mono text-sm text-[#6b7c93]">0.00</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
+
+          {/* Disconnect */}
+          <Button
+            variant="outline"
+            className="w-full border-[#e6e9ec] text-[#6b7c93] hover:bg-[#f6f9fc] hover:text-[#32325d]"
+            onClick={handleDisconnect}
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Disconnect
+          </Button>
         </div>
       </div>
     </div>

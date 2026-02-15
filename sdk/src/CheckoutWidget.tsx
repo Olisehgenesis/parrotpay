@@ -25,6 +25,8 @@ export interface CheckoutWidgetProps extends ParrotPayConfig {
   isOpen: boolean
   onClose: () => void
   connectWallet: () => void
+  /** True when user is authenticated but wallet address not yet available */
+  isWalletLoading?: boolean
   sendPayment: (config: {
     to: `0x${string}`
     amount: bigint
@@ -53,6 +55,7 @@ export function CheckoutWidget({
   sendPayment,
   isConnected,
   isSending,
+  isWalletLoading = false,
 }: CheckoutWidgetProps) {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -68,10 +71,11 @@ export function CheckoutWidget({
   const needsPhone = !!collect.phone
 
   const handlePay = async () => {
-    if (!isConnected) {
+    if (!isConnected && !isWalletLoading) {
       connectWallet()
       return
     }
+    if (isWalletLoading) return
 
     if (needsName && !customerName.trim()) {
       setError('Please enter your full name')
@@ -115,7 +119,7 @@ export function CheckoutWidget({
           <button className="parrot-pay-close" onClick={onClose} aria-label="Close">
             ×
           </button>
-          <h3>Parrot Pay</h3>
+          <h3>Tempo</h3>
           <p>Tempo Testnet • Secure payment</p>
         </div>
         <div className="parrot-pay-body">
@@ -207,9 +211,9 @@ export function CheckoutWidget({
             Pay to: {recipient.slice(0, 6)}...{recipient.slice(-4)}
           </p>
           <button
-            className={`parrot-pay-btn ${!isConnected ? 'parrot-pay-connect' : ''} ${isSending ? 'parrot-pay-loading' : ''} ${success ? 'parrot-pay-success' : ''}`}
+            className={`parrot-pay-btn ${!isConnected && !isWalletLoading ? 'parrot-pay-connect' : ''} ${isSending ? 'parrot-pay-loading' : ''} ${success ? 'parrot-pay-success' : ''}`}
             onClick={handlePay}
-            disabled={isSending || success}
+            disabled={isSending || success || isWalletLoading}
           >
             {success ? (
               <>
@@ -220,6 +224,11 @@ export function CheckoutWidget({
               <>
                 <span className="parrot-pay-spinner" />
                 Processing...
+              </>
+            ) : isWalletLoading ? (
+              <>
+                <span className="parrot-pay-spinner" />
+                Setting up wallet...
               </>
             ) : !isConnected ? (
               'Connect Wallet'

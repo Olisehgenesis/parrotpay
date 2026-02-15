@@ -13,10 +13,20 @@
     },
     "./dist/index.css": "./dist/index.css"
   },
-  "files": ["dist"],
+  "files": ["dist", "README.md"],
   "scripts": {
     "build": "pnpm exec tsup src/index.tsx --format cjs,esm --dts --external react --external react-dom",
-    "dev": "tsup src/index.tsx --format cjs,esm --dts --watch --external react --external react-dom"
+    "dev": "tsup src/index.tsx --format cjs,esm --dts --watch --external react --external react-dom",
+    "prepublishOnly": "pnpm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/parrotpay/tempo.git"
+  },
+  "keywords": ["tempo", "payments", "crypto", "blockchain", "checkout", "wallet"],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
