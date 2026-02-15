@@ -15,7 +15,9 @@ import { DisplayAmount } from '@/app/components/display-amount'
 import { formatPaymentAmount } from '@/lib/format-payment-amount'
 import { AppHeader } from '@/app/components/app-header'
 import { API_KEY_SIGNATURE_MESSAGE } from '@/lib/api-key'
-import { Copy, Check, Key, Trash2 } from 'lucide-react'
+import { Copy, Check, Key, Trash2, ShieldAlert } from 'lucide-react'
+import { PaymentReceiptModal } from '@/app/components/payment-receipt-modal'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 type ApiKey = {
   id: string
@@ -62,6 +64,7 @@ function DashboardContent() {
   const [newKeyName, setNewKeyName] = useState('')
   const [createdKey, setCreatedKey] = useState<string | null>(null)
   const [keyCopied, setKeyCopied] = useState(false)
+  const [viewPayment, setViewPayment] = useState<Payment | null>(null)
   const { signMessage } = useSignMessage()
 
   const loadApiKeys = useCallback(() => {
@@ -202,13 +205,13 @@ function DashboardContent() {
                             </TableCell>
                             <TableCell>{new Date(p.createdAt).toLocaleDateString()}</TableCell>
                             <TableCell>
-                              {p.txHash && (
-                                <Button variant="link" size="sm" asChild>
-                                  <a href={`https://explore.tempo.xyz/tx/${p.txHash}`} target="_blank" rel="noopener noreferrer">
-                                    View
-                                  </a>
-                                </Button>
-                              )}
+                              <Button
+                                variant="link"
+                                size="sm"
+                                onClick={() => setViewPayment(p)}
+                              >
+                                View receipt
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -229,6 +232,13 @@ function DashboardContent() {
                   <CardDescription>Create keys to create payment links programmatically. Each link is tied to the key that created it.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <Alert className="border-amber-200 bg-amber-50/80">
+                    <ShieldAlert className="h-4 w-4" />
+                    <AlertTitle>Keep your keys safe</AlertTitle>
+                    <AlertDescription>
+                      API keys are shown once. Store them securely. Never share or commit them to version control.
+                    </AlertDescription>
+                  </Alert>
                   {createdKey ? (
                     <div className="border border-[#16a34a]/30 bg-[#dcfce7]/50 p-4 space-y-3">
                       <p className="text-sm font-medium text-[#166534]">API key created. Copy it now — it won&apos;t be shown again.</p>
@@ -367,13 +377,13 @@ function DashboardContent() {
                             </TableCell>
                             <TableCell>{new Date(p.createdAt).toLocaleDateString()}</TableCell>
                             <TableCell>
-                              {p.txHash && (
-                                <Button variant="link" size="sm" asChild>
-                                  <a href={`https://explore.tempo.xyz/tx/${p.txHash}`} target="_blank" rel="noopener noreferrer">
-                                    View
-                                  </a>
-                                </Button>
-                              )}
+                              <Button
+                                variant="link"
+                                size="sm"
+                                onClick={() => setViewPayment(p)}
+                              >
+                                View receipt
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -384,6 +394,30 @@ function DashboardContent() {
               </Card>
             </TabsContent>
           </Tabs>
+
+          <PaymentReceiptModal
+            isOpen={!!viewPayment}
+            onClose={() => setViewPayment(null)}
+            payment={
+              viewPayment
+                ? {
+                    amount: viewPayment.amount,
+                    currency: 'USD',
+                    fromAddress: viewPayment.fromAddress,
+                    toAddress: viewPayment.toAddress,
+                    status: viewPayment.status,
+                    txHash: viewPayment.txHash,
+                    customerName: viewPayment.customerName,
+                    customerEmail: viewPayment.customerEmail,
+                    customerPhone: viewPayment.customerPhone,
+                    createdAt: viewPayment.createdAt,
+                  }
+                : {
+                    amount: '0',
+                    status: '',
+                  }
+            }
+          />
         </div>
       </main>
     </div>

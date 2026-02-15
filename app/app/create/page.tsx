@@ -255,10 +255,10 @@ export default function CreatePaymentLinkPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="meal">Order notes <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                <Label htmlFor="meal">Notes <span className="text-muted-foreground font-normal">(optional)</span></Label>
                 <Input
                   id="meal"
-                  placeholder="e.g. Lunch order, Table 5"
+                  placeholder="e.g. Table 5, Delivery instructions"
                   value={meal}
                   onChange={(e) => setMeal(e.target.value)}
                 />

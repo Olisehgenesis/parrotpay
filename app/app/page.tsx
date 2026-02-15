@@ -15,14 +15,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import PhoneInput from 'react-phone-number-input'
 import 'react-phone-number-input/style.css'
 import Link from 'next/link'
+import { Key } from 'lucide-react'
 import { AppHeader } from '@/app/components/app-header'
+import { PaymentReceiptModal } from '@/app/components/payment-receipt-modal'
 
-const DEMO_MERCHANT = '0x031891A61200FedDd622EbACC10734BC90093B2A' as Address
+const DEMO_MERCHANT = '0x53eaF4CD171842d8144e45211308e5D90B4b0088' as Address
 
 export default function Home() {
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [lastTx, setLastTx] = useState<string | null>(null)
+  const [showReceipt, setShowReceipt] = useState(false)
   const [phoneToPay, setPhoneToPay] = useState('')
   const [phoneError, setPhoneError] = useState<string | null>(null)
   const [codeTab, setCodeTab] = useState('sdk')
@@ -119,7 +122,7 @@ export default function Home() {
                 </TabsContent>
                 <TabsContent value="embed" className="mt-3">
                   <pre className="bg-[#32325d] text-[#e6ecf1] p-4 text-sm overflow-x-auto font-mono">
-                    {`<script src="${typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.com'}/embed.js" data-merchant="YOUR_SLUG"></script>`}
+                    {`<script src="${typeof window !== 'undefined' ? window.location.origin : 'https://parrotpay.vercel.app'}/embed.js" data-merchant="YOUR_SLUG"></script>`}
                   </pre>
                   <p className="text-xs text-[#6b7c93] mt-2">Replace YOUR_SLUG with your payment link slug. When deployed, the script uses your domain. Injects a &quot;Pay with Tempo&quot; button.</p>
                 </TabsContent>
@@ -141,6 +144,23 @@ export default function Home() {
               One line. Payments. Done.{' '}
               <Link href="/docs" className="text-[#635bff] hover:underline">API docs</Link> for programmatic access.
             </p>
+
+            <Card className="border-[#e6e9ec] mt-6 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Key className="h-4 w-4" />
+                  API keys
+                </CardTitle>
+                <CardDescription>
+                  Create keys in your dashboard to create payment links via API. Use <code className="bg-muted px-1 text-xs">Authorization: Bearer YOUR_KEY</code> in requests.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/dashboard">Create API key →</Link>
+                </Button>
+              </CardContent>
+            </Card>
 
             {/* Pay by phone */}
             <Card className="border-[#e6e9ec] mt-8 shadow-sm">
@@ -226,12 +246,47 @@ export default function Home() {
         amount="10"
         token={ALPHA_USD}
         memo="parrot-pay-demo"
-        onSuccess={(tx) => setLastTx(tx)}
+        onSuccess={async (tx) => {
+          setLastTx(tx)
+          setShowReceipt(true)
+          if (address) {
+            try {
+              await fetch('/api/payments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  txHash: tx,
+                  amount: '10.00',
+                  fromAddress: address.toLowerCase(),
+                  toAddress: DEMO_MERCHANT.toLowerCase(),
+                  memo: 'parrot-pay-demo',
+                  status: 'COMPLETED',
+                }),
+              })
+            } catch {
+              // Payment succeeded on-chain; recording is best-effort
+            }
+          }
+        }}
         connectWallet={login}
         sendPayment={sendPayment}
         isConnected={!!address}
         isWalletLoading={authenticated && !address}
         isSending={isSending}
+      />
+
+      <PaymentReceiptModal
+        isOpen={showReceipt}
+        onClose={() => setShowReceipt(false)}
+        payment={{
+          amount: '10.00',
+          currency: 'USD',
+          fromAddress: address ?? undefined,
+          toAddress: DEMO_MERCHANT,
+          status: 'COMPLETED',
+          txHash: lastTx,
+          createdAt: new Date().toISOString(),
+        }}
       />
     </div>
   )

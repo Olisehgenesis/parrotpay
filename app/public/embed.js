@@ -1,6 +1,6 @@
 /**
  * Tempo / Parrot Pay - Embed script
- * Add to any site: <script src="https://YOUR_DOMAIN/embed.js" data-merchant="PAYMENT_LINK_SLUG"></script>
+ * Add to any site: <script src="https://parrotpay.vercel.app/embed.js" data-merchant="PAYMENT_LINK_SLUG"></script>
  * Opens /pay/{slug} when the button is clicked.
  */
 (function () {

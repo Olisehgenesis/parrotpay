@@ -11,10 +11,13 @@
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
+    "db:seed": "prisma db seed",
     "send-tip": "tsx scripts/send-tip.ts"
   },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "dependencies": {
-    "parrotpay-sdk": "^0.1.0",
     "@prisma/client": "^5.22.0",
     "@privy-io/react-auth": "^3.13.1",
     "@privy-io/wagmi": "^4.0.1",
@@ -28,6 +31,8 @@
     "clsx": "^2.1.1",
     "lucide-react": "^0.564.0",
     "next": "^16.1.6",
+    "parrotpay-sdk": "^0.1.0",
+    "qrcode.react": "^4.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-phone-number-input": "^3.4.14",

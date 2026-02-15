@@ -19,6 +19,26 @@ export default function DocsPage() {
           Integrate Tempo payments into your backend. Create payment links, check status, and list payments programmatically.
         </p>
 
+        {/* API Keys */}
+        <section className="mb-12">
+          <h2 className="text-lg font-semibold text-[#32325d] mb-3">API keys</h2>
+          <p className="text-[#6b7c93] mb-4">
+            Most API endpoints require authentication. Create an API key from your{' '}
+            <Link href="/dashboard" className="text-[#635bff] hover:underline">Dashboard</Link> (API keys tab).
+            Sign in with your wallet and create a key — you&apos;ll see the full key once; copy and store it securely.
+          </p>
+          <div className="border border-[#e6e9ec] bg-white p-4 mb-4">
+            <p className="text-xs font-medium text-[#6b7c93] mb-2">Using your API key</p>
+            <p className="text-sm text-[#32325d] mb-2">Send the key in one of these headers:</p>
+            <pre className="text-sm text-[#32325d] overflow-x-auto">{`Authorization: Bearer YOUR_API_KEY
+# or
+x-api-key: YOUR_API_KEY`}</pre>
+            <p className="text-sm text-[#6b7c93] mt-3">
+              <strong>Security:</strong> Never expose your API key in client-side code or public repos. Use it only in server-side requests.
+            </p>
+          </div>
+        </section>
+
         <section className="mb-12">
           <h2 className="text-lg font-semibold text-[#32325d] mb-4">Base URL</h2>
           <pre className="bg-[#32325d] text-[#e6ecf1] p-4 text-sm overflow-x-auto">
@@ -35,6 +55,7 @@ export default function DocsPage() {
             <p className="text-xs font-medium text-[#6b7c93] mb-1">POST /api/payment-links</p>
             <pre className="text-sm text-[#32325d] overflow-x-auto">{`curl -X POST ${BASE}/api/payment-links \\
   -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
   -d '{
     "title": "Lunch order",
     "amount": "10.00",
@@ -136,6 +157,9 @@ export default function DocsPage() {
             <p className="text-xs font-medium text-[#6b7c93] mb-1">GET /api/payment-links?address=0x...</p>
             <pre className="text-sm text-[#32325d] overflow-x-auto">{`curl "${BASE}/api/payment-links?address=0xYourWalletAddress"`}</pre>
           </div>
+          <p className="text-sm text-[#6b7c93] mt-2">
+            With an API key: <code className="bg-[#e6e9ec] px-1">GET /api/payment-links</code> returns links created by that key (no address param needed).
+          </p>
         </section>
 
         {/* Get Payment Status */}
@@ -207,9 +231,10 @@ export default function DocsPage() {
         {/* Quick Example */}
         <section className="mb-12">
           <h2 className="text-lg font-semibold text-[#32325d] mb-3">Quick example</h2>
-          <p className="text-[#6b7c93] mb-4">Create a link and share the pay URL:</p>
+          <p className="text-[#6b7c93] mb-4">Create a link and share the pay URL (requires API key):</p>
           <pre className="bg-[#32325d] text-[#e6ecf1] p-4 text-sm overflow-x-auto">{`curl -X POST ${BASE}/api/payment-links \\
   -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
   -d '{"amount":"25.00","recipientAddress":"0xYourWallet"}' \\
   | jq -r '.slug' | xargs -I {} echo "Pay URL: ${BASE}/pay/{}"`}</pre>
         </section>

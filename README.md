@@ -60,7 +60,7 @@ cd app && pnpm db:migrate
 Add payments to any site with one line. After deploying, add to your external site:
 
 ```html
-<script src="https://YOUR_DEPLOYED_URL/embed.js" data-merchant="YOUR_PAYMENT_LINK_SLUG"></script>
+<script src="https://parrotpay.vercel.app/embed.js" data-merchant="YOUR_PAYMENT_LINK_SLUG"></script>
 ```
 
 Options: `data-base` (override base URL), `data-button` (button text), `data-target="self"` (same tab), `data-container` (CSS selector for button placement).

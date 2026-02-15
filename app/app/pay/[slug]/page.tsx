@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label'
 import { useDisplayAmount } from '@/app/hooks/use-display-amount'
 import { useGaslessTransfer } from '@/app/hooks/use-gasless-transfer'
 import { AppHeader } from '@/app/components/app-header'
-import { PaymentSuccessModal } from '@/app/components/payment-success-modal'
+import { PaymentReceiptModal } from '@/app/components/payment-receipt-modal'
 
 type PaymentLink = {
   id: string
@@ -286,14 +286,24 @@ export default function PayPage() {
       </main>
 
       {!redirectUrl?.trim() && (
-        <PaymentSuccessModal
+        <PaymentReceiptModal
           isOpen={success}
           onClose={() => {
             setSuccess(false)
             setSuccessTxHash(null)
           }}
-          amount={displayAmount}
-          txHash={successTxHash}
+          payment={{
+            amount: link?.amount ?? '0',
+            currency: link?.currency || 'USD',
+            fromAddress: address ?? undefined,
+            toAddress: link?.recipientAddress,
+            status: 'COMPLETED',
+            txHash: successTxHash,
+            customerName: needsName ? customerName : undefined,
+            customerEmail: needsEmail ? customerEmail : undefined,
+            customerPhone: needsPhone ? customerPhone : undefined,
+            createdAt: new Date().toISOString(),
+          }}
         />
       )}
     </div>
